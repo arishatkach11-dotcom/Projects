@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Судоку: Хроники Времени</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 10px;
+            margin: 0;
+            transition: background-color 0.4s ease;
+        }
+
+        /* ============================================================
+           ТЁМНАЯ ТЕМА
+           ============================================================ */
+        body.dark-theme {
+            background: #0a0a1a;
+        }
+
+        body.dark-theme #app {
+            background: linear-gradient(145deg, #12122a, #0a0a1a);
+            border: 2px solid #2a2a4a;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        body.dark-theme .top-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #2a2a4a;
+        }
+
+        body.dark-theme .stat {
+            color: #8899bb;
+        }
+        body.dark-theme .stat span {
+            color: #66ccff;
+        }
+
+        body.dark-theme .sudoku-grid {
+            background: #1a1a3a;
+            border: 3px solid #2a2a5a;
+        }
+
+        body.dark-theme .cell {
+            background: #0a0a1a !important;
+            color: #aabbdd !important;
+            border: 1px solid #1a1a3a;
+        }
+
+        body.dark-theme .cell.fixed {
+            color: #ffd700 !important;
+            font-weight: 900;
+            background: #0a0a1a !important;
+        }
+
+        body.dark-theme .cell.user {
+            color: #66ccff !important;
+            background: #0a0a1a !important;
+        }
+
+        body.dark-theme .cell.empty {
+            color: transparent !important;
+            background: #0a0a1a !important;
+        }
+
+        body.dark-theme .cell.block-border-right {
+            border-right: 3px solid #2a2a5a;
+        }
+        body.dark-theme .cell.block-border-bottom {
+            border-bottom: 3px solid #2a2a5a;
+        }
+
+        body.dark-theme .cell.selected {
+            background: #1a2a5a !important;
+            box-shadow: inset 0 0 30px rgba(100, 200, 255, 0.2);
+        }
+
+        body.dark-theme .cell.highlighted {
+            background: #0a1a3a !important;
+        }
+
+        body.dark-theme .cell.same-number {
+            background: #1a2a4a !important;
+        }
+
+        body.dark-theme .cell.conflict {
+            background: #4a1a1a !important;
+            color: #ff4466 !important;
+        }
+
+        body.dark-theme .cell.error {
+            background: #6a1a1a !important;
+        }
+
+        body.dark-theme .num-btn {
+            background: #1a1a3a;
+            border: 1px solid #2a2a5a;
+            color: #8899bb;
+        }
+
+        body.dark-theme .num-btn:hover:not(.used-up) {
+            background: #2a2a5a;
+            border-color: #66ccff;
+            color: #66ccff;
+        }
+
+        body.dark-theme .num-btn.used-up {
+            opacity: 0.2;
+            cursor: not-allowed;
+            transform: none !important;
+            background: #1a1a3a;
+            border-color: #2a2a3a;
+            color: #445566;
+        }
+
+        body.dark-theme .num-btn .count {
+            color: #556688;
+            font-size: 0.6rem;
+            margin-left: 2px;
+        }
+
+        body.dark-theme .btn {
+            background: #1a1a3a;
+            border: 1px solid #2a2a5a;
+            color: #8899bb;
+        }
+
+        body.dark-theme .btn:hover {
+            background: #2a2a5a;
+            border-color: #66ccff;
+            color: #66ccff;
+        }
+
+        body.dark-theme .btn-primary {
+            background: #1a4a6a;
+            border-color: #2a6a8a;
+            color: #66ccff;
+        }
+
+        body.dark-theme .btn-primary:hover {
+            background: #2a5a7a;
+            border-color: #66ccff;
+        }
+
+        body.dark-theme .btn-success {
+            background: #1a4a2a;
+            border-color: #2a6a3a;
+            color: #66ff88;
+        }
+
+        body.dark-theme .btn-success:hover {
+            background: #2a5a3a;
+            border-color: #66ff88;
+        }
+
+        body.dark-theme .btn-danger {
+            background: #4a1a1a;
+            border-color: #6a2a2a;
+            color: #ff4466;
+        }
+
+        body.dark-theme .btn-danger:hover {
+            background: #5a2a2a;
+            border-color: #ff4466;
+        }
+
+        body.dark-theme #message {
+            color: #8899bb;
+        }
+
+        body.dark-theme #difficultySelect {
+            background: #1a1a3a;
+            color: #8899bb;
+            border: 1px solid #2a2a5a;
+        }
+
+        body.dark-theme .bottom-panel {
+            border-top: 1px solid #1a1a3a;
+        }
+
+        body.dark-theme .theme-toggle {
+            color: #ffd700;
+        }
+
+        /* ============================================================
+           СВЕТЛАЯ ТЕМА
+           ============================================================ */
+        body.light-theme {
+            background: #e8ecf1;
+        }
+
+        body.light-theme #app {
+            background: linear-gradient(145deg, #f0f4f8, #e0e4e9);
+            border: 2px solid #c0c8d0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        body.light-theme .top-panel {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid #c0c8d0;
+        }
+
+        body.light-theme .stat {
+            color: #445566;
+        }
+        body.light-theme .stat span {
+            color: #2a6a9a;
+        }
+
+        body.light-theme .sudoku-grid {
+            background: #c0c8d0;
+            border: 3px solid #a0a8b0;
+        }
+
+        body.light-theme .cell {
+            background: #ffffff !important;
+            color: #222222 !important;
+            border: 1px solid #d0d8e0;
+        }
+
+        body.light-theme .cell.fixed {
+            color: #000000 !important;
+            font-weight: 900;
+            background: #ffffff !important;
+        }
+
+        body.light-theme .cell.user {
+            color: #2a7acc !important;
+            background: #ffffff !important;
+        }
+
+        body.light-theme .cell.empty {
+            color: transparent !important;
+            background: #ffffff !important;
+        }
+
+        body.light-theme .cell.block-border-right {
+            border-right: 3px solid #a0a8b0;
+        }
+        body.light-theme .cell.block-border-bottom {
+            border-bottom: 3px solid #a0a8b0;
+        }
+
+        body.light-theme .cell.selected {
+            background: #c5d9f0 !important;
+            box-shadow: inset 0 0 30px rgba(42, 122, 204, 0.2);
+        }
+
+        body.light-theme .cell.highlighted {
+            background: #e8edf5 !important;
+        }
+
+        body.light-theme .cell.same-number {
+            background: #d5e0f0 !important;
+        }
+
+        body.light-theme .cell.conflict {
+            background: #f0d0d0 !important;
+            color: #cc2233 !important;
+        }
+
+        body.light-theme .cell.error {
+            background: #f0c0c0 !important;
+        }
+
+        body.light-theme .num-btn {
+            background: #ffffff;
+            border: 1px solid #c0c8d0;
+            color: #445566;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-theme .num-btn:hover:not(.used-up) {
+            background: #e8ecf1;
+            border-color: #2a6a9a;
+            color: #2a6a9a;
+        }
+
+        body.light-theme .num-btn.used-up {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+            background: #f0f0f0;
+            border-color: #d0d0d0;
+            color: #999999;
+        }
+
+        body.light-theme .num-btn .count {
+            color: #8899aa;
+            font-size: 0.6rem;
+            margin-left: 2px;
+        }
+
+        body.light-theme .btn {
+            background: #ffffff;
+            border: 1px solid #c0c8d0;
+            color: #445566;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-theme .btn:hover {
+            background: #e8ecf1;
+            border-color: #2a6a9a;
+            color: #2a6a9a;
+        }
+
+        body.light-theme .btn-primary {
+            background: #c5d9f0;
+            border-color: #2a6a9a;
+            color: #1a4a7a;
+        }
+
+        body.light-theme .btn-primary:hover {
+            background: #a8c8e8;
+            border-color: #1a5a8a;
+            color: #0a3a6a;
+        }
+
+        body.light-theme .btn-success {
+            background: #c5f0d0;
+            border-color: #2a8a4a;
+            color: #1a6a3a;
+        }
+
+        body.light-theme .btn-success:hover {
+            background: #a8e8b8;
+            border-color: #1a7a3a;
+            color: #0a5a2a;
+        }
+
+        body.light-theme .btn-danger {
+            background: #f0c5c5;
+            border-color: #aa3a3a;
+            color: #8a2a2a;
+        }
+
+        body.light-theme .btn-danger:hover {
+            background: #e8a8a8;
+            border-color: #8a2a2a;
+            color: #6a1a1a;
+        }
+
+        body.light-theme #message {
+            color: #445566;
+        }
+
+        body.light-theme #difficultySelect {
+            background: #ffffff;
+            color: #445566;
+            border: 1px solid #c0c8d0;
+        }
+
+        body.light-theme .bottom-panel {
+            border-top: 1px solid #c0c8d0;
+        }
+
+        body.light-theme .theme-toggle {
+            color: #f5a623;
+        }
+
+        /* ============================================================
+           ОБЩИЕ СТИЛИ
+           ============================================================ */
+        #app {
+            padding: 20px;
+            border-radius: 30px;
+            max-width: 650px;
+            width: 100%;
+            transition: all 0.4s ease;
+        }
+
+        .top-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px;
+            border-radius: 50px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: color 0.3s ease;
+        }
+
+        .stat span {
+            font-size: 1.1rem;
+            min-width: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .stat .lives {
+            font-size: 1.2rem;
+        }
+
+        #difficultySelect {
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+            aspect-ratio: 1 / 1;
+            transition: all 0.3s ease;
+        }
+
+        .sudoku-grid.victory {
+            animation: gridVictory 0.8s ease forwards;
+        }
+
+        @keyframes gridVictory {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            30% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            font-size: 1.4rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .cell.empty {
+            color: transparent !important;
+        }
+
+        .cell.selected {
+            box-shadow: inset 0 0 30px rgba(100, 200, 255, 0.2);
+        }
+
+        .cell.error {
+            animation: errorPulse 0.5s ease;
+        }
+
+        @keyframes errorPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .cell.hint {
+            animation: hintGlow 0.5s ease;
+        }
+
+        @keyframes hintGlow {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* ============================================================
+           ПАНЕЛЬ ЦИФР С ПОДСЧЁТОМ
+           ============================================================ */
+        .number-panel {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        .num-btn {
+            border-radius: 12px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            padding: 10px 0;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .num-btn .digit {
+            font-size: 1.4rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .num-btn .count {
+            font-size: 0.6rem;
+            margin-top: 2px;
+            opacity: 0.7;
+        }
+
+        .num-btn:active:not(.used-up) {
+            transform: scale(0.95);
+        }
+
+        .num-btn.used-up {
+            opacity: 0.2;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .num-btn.completed {
+            animation: numberComplete 0.5s ease;
+        }
+
+        @keyframes numberComplete {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .bottom-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border: 1px solid;
+        }
+
+        .btn:hover {
+            transform: scale(1.03);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        #message {
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 100px;
+            transition: color 0.3s ease;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 600px) {
+            #app { padding: 12px; border-radius: 20px; }
+            .cell { font-size: 1rem; }
+            .num-btn { font-size: 1.1rem; padding: 6px 0; }
+            .num-btn .digit { font-size: 1.1rem; }
+            .stat { font-size: 0.75rem; }
+            .btn { font-size: 0.75rem; padding: 6px 12px; }
+            .top-panel { padding: 8px 12px; }
+            .theme-toggle { font-size: 1rem; }
+        }
+
+        @media (max-width: 400px) {
+            .cell { font-size: 0.8rem; }
+            .num-btn { font-size: 0.9rem; padding: 4px 0; }
+            .num-btn .digit { font-size: 0.9rem; }
+            .num-btn .count { font-size: 0.5rem; }
+            .stat { font-size: 0.65rem; }
+            .btn { font-size: 0.65rem; padding: 4px 10px; }
+            .theme-toggle { font-size: 0.9rem; }
+        }
+
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .victory-box {
+            padding: 40px;
+            border-radius: 30px;
+            border: 2px solid #ffd700;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-theme .victory-box {
+            background: linear-gradient(145deg, #1a2a4a, #0a1a2a);
+            border-color: #ffd700;
+        }
+
+        body.light-theme .victory-box {
+            background: linear-gradient(145deg, #f0f4f8, #e0e4e9);
+            border-color: #2a6a9a;
+        }
+
+        body.dark-theme .victory-box h2 {
+            color: #ffd700;
+        }
+        body.light-theme .victory-box h2 {
+            color: #1a4a7a;
+        }
+        body.dark-theme .victory-box p {
+            color: #8899bb;
+        }
+        body.light-theme .victory-box p {
+            color: #445566;
+        }
+        body.dark-theme .victory-box .stats {
+            color: #66ccff;
+        }
+        body.light-theme .victory-box .stats {
+            color: #2a6a9a;
+        }
+        .victory-box .btn {
+            margin-top: 15px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div id="app">
+        <div class="top-panel">
+            <div class="stat">⏱️ <span id="timerDisplay">00:00</span></div>
+            <div class="stat">🎯 <span id="movesDisplay">0</span></div>
+            <div class="stat lives" id="livesDisplay">❤️❤️❤️</div>
+            <button class="theme-toggle" id="themeToggle" title="Переключить тему">🌙</button>
+            <select id="difficultySelect">
+                <option value="easy">Лёгкий</option>
+                <option value="medium" selected>Средний</option>
+                <option value="hard">Сложный</option>
+            </select>
+        </div>
+
+        <div class="sudoku-grid" id="gridContainer"></div>
+
+        <div class="number-panel" id="numberPanel">
+            <button class="num-btn" data-num="1">
+                <span class="digit">1</span>
+                <span class="count" id="count1">0/9</span>
+            </button>
+            <button class="num-btn" data-num="2">
+                <span class="digit">2</span>
+                <span class="count" id="count2">0/9</span>
+            </button>
+            <button class="num-btn" data-num="3">
+                <span class="digit">3</span>
+                <span class="count" id="count3">0/9</span>
+            </button>
+            <button class="num-btn" data-num="4">
+                <span class="digit">4</span>
+                <span class="count" id="count4">0/9</span>
+            </button>
+            <button class="num-btn" data-num="5">
+                <span class="digit">5</span>
+                <span class="count" id="count5">0/9</span>
+            </button>
+            <button class="num-btn" data-num="6">
+                <span class="digit">6</span>
+                <span class="count" id="count6">0/9</span>
+            </button>
+            <button class="num-btn" data-num="7">
+                <span class="digit">7</span>
+                <span class="count" id="count7">0/9</span>
+            </button>
+            <button class="num-btn" data-num="8">
+                <span class="digit">8</span>
+                <span class="count" id="count8">0/9</span>
+            </button>
+            <button class="num-btn" data-num="9">
+                <span class="digit">9</span>
+                <span class="count" id="count9">0/9</span>
+            </button>
+        </div>
+
+        <div class="bottom-panel">
+            <div id="message">🎮 Выберите ячейку и введите цифру</div>
+            <div class="btn-group">
+                <button class="btn btn-success" id="hintBtn">💡 Подсказка (<span id="hintCount">3</span>)</button>
+                <button class="btn btn-danger" id="clearBtn">🗑️ Очистить</button>
+                <button class="btn btn-primary" id="newGameBtn">♻ Новая</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. КОНСТАНТЫ
+        // ============================================================
+        const SIZE = 9;
+        const BOX_SIZE = 3;
+        const EMPTY = 0;
+
+        // ============================================================
+        // 2. СОСТОЯНИЕ
+        // ============================================================
+        let game = {
+            board: [],
+            userBoard: [],
+            fixed: [],
+            selected: null,
+            lives: 3,
+            moves: 0,
+            time: 0,
+            timerInterval: null,
+            difficulty: 'medium',
+            gameOver: false,
+            hints: 3
+        };
+
+        let currentTheme = 'dark';
+
+        // ============================================================
+        // 3. ТЕМА
+        // ============================================================
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggle');
+            if (currentTheme === 'dark') {
+                body.classList.remove('dark-theme');
+                body.classList.add('light-theme');
+                currentTheme = 'light';
+                btn.textContent = '☀️';
+            } else {
+                body.classList.remove('light-theme');
+                body.classList.add('dark-theme');
+                currentTheme = 'dark';
+                btn.textContent = '🌙';
+            }
+            render();
+        }
+
+        // ============================================================
+        // 4. ГЕНЕРАЦИЯ СУДОКУ
+        // ============================================================
+
+        function generateSudoku() {
+            let board = Array.from({ length: SIZE }, () => Array(SIZE).fill(EMPTY));
+            for (let box = 0; box < SIZE; box += BOX_SIZE) {
+                fillBox(board, box, box);
+            }
+            solveSudoku(board);
+            return board;
+        }
+
+        function fillBox(board, row, col) {
+            const nums = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+            let idx = 0;
+            for (let r = row; r < row + BOX_SIZE; r++) {
+                for (let c = col; c < col + BOX_SIZE; c++) {
+                    board[r][c] = nums[idx++];
+                }
+            }
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function solveSudoku(board) {
+            for (let row = 0; row < SIZE; row++) {
+                for (let col = 0; col < SIZE; col++) {
+                    if (board[row][col] === EMPTY) {
+                        const nums = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                        for (let num of nums) {
+                            if (isValid(board, row, col, num)) {
+                                board[row][col] = num;
+                                if (solveSudoku(board)) {
+                                    return true;
+                                }
+                                board[row][col] = EMPTY;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function isValid(board, row, col, num) {
+            for (let c = 0; c < SIZE; c++) {
+                if (board[row][c] === num) return false;
+            }
+            for (let r = 0; r < SIZE; r++) {
+                if (board[r][col] === num) return false;
+            }
+            const boxRow = Math.floor(row / BOX_SIZE) * BOX_SIZE;
+            const boxCol = Math.floor(col / BOX_SIZE) * BOX_SIZE;
+            for (let r = boxRow; r < boxRow + BOX_SIZE; r++) {
+                for (let c = boxCol; c < boxCol + BOX_SIZE; c++) {
+                    if (board[r][c] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function removeCells(board, difficulty) {
+            const counts = { easy: 30, medium: 45, hard: 55 };
+            const count = counts[difficulty] || 45;
+
+            const positions = [];
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    positions.push({ row: r, col: c });
+                }
+            }
+            shuffleArray(positions);
+
+            const userBoard = board.map(row => [...row]);
+            const fixed = board.map(row => row.map(() => false));
+
+            for (let i = 0; i < count && i < positions.length; i++) {
+                const { row, col } = positions[i];
+                userBoard[row][col] = EMPTY;
+            }
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (userBoard[r][c] !== EMPTY) {
+                        fixed[r][c] = true;
+                    }
+                }
+            }
+
+            return { userBoard, fixed };
+        }
+
+        // ============================================================
+        // 5. ПОДСЧЁТ ЦИФР
+        // ============================================================
+        function getNumberCounts() {
+            const counts = {};
+            for (let i = 1; i <= 9; i++) {
+                counts[i] = 0;
+            }
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const val = game.userBoard[r][c];
+                    if (val !== EMPTY) {
+                        counts[val] = (counts[val] || 0) + 1;
+                    }
+                }
+            }
+            return counts;
+        }
+
+        function updateNumberPanel() {
+            const counts = getNumberCounts();
+            for (let i = 1; i <= 9; i++) {
+                const countEl = document.getElementById(`count${i}`);
+                const btn = countEl.closest('.num-btn');
+                if (countEl) {
+                    countEl.textContent = `${counts[i]}/9`;
+                }
+                if (btn) {
+                    if (counts[i] >= 9) {
+                        btn.classList.add('used-up');
+                        if (counts[i] === 9) {
+                            btn.classList.add('completed');
+                            setTimeout(() => btn.classList.remove('completed'), 500);
+                        }
+                    } else {
+                        btn.classList.remove('used-up', 'completed');
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 6. ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        function initGame(difficulty = 'medium') {
+            if (game.timerInterval) {
+                clearInterval(game.timerInterval);
+                game.timerInterval = null;
+            }
+
+            game.difficulty = difficulty;
+            game.lives = 3;
+            game.moves = 0;
+            game.time = 0;
+            game.gameOver = false;
+            game.hints = 3;
+            game.selected = null;
+
+            const solvedBoard = generateSudoku();
+            const { userBoard, fixed } = removeCells(solvedBoard, difficulty);
+
+            game.board = solvedBoard;
+            game.userBoard = userBoard;
+            game.fixed = fixed;
+
+            document.getElementById('message').innerText = '🎮 Выберите ячейку и введите цифру';
+            
+            // Убираем класс victory если был
+            const grid = document.getElementById('gridContainer');
+            grid.classList.remove('victory');
+            
+            render();
+            startTimer();
+        }
+
+        // ============================================================
+        // 7. ТАЙМЕР
+        // ============================================================
+        function startTimer() {
+            if (game.timerInterval) {
+                clearInterval(game.timerInterval);
+            }
+            game.timerInterval = setInterval(() => {
+                if (!game.gameOver) {
+                    game.time++;
+                    updateTimer();
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const mins = Math.floor(game.time / 60);
+            const secs = game.time % 60;
+            document.getElementById('timerDisplay').textContent =
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // ============================================================
+        // 8. ОТРИСОВКА
+        // ============================================================
+        function render() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+
+            const selected = game.selected;
+            const selectedNum = selected ? game.userBoard[selected.row][selected.col] : 0;
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    if ((c + 1) % BOX_SIZE === 0 && c < SIZE - 1) {
+                        cell.classList.add('block-border-right');
+                    }
+                    if ((r + 1) % BOX_SIZE === 0 && r < SIZE - 1) {
+                        cell.classList.add('block-border-bottom');
+                    }
+
+                    const value = game.userBoard[r][c];
+                    const isFixed = game.fixed[r][c];
+
+                    if (value !== EMPTY) {
+                        cell.textContent = value;
+                        if (isFixed) {
+                            cell.classList.add('fixed');
+                        } else {
+                            cell.classList.add('user');
+                        }
+                    } else {
+                        cell.classList.add('empty');
+                        cell.textContent = '';
+                    }
+
+                    if (selected && selected.row === r && selected.col === c) {
+                        cell.classList.add('selected');
+                    }
+
+                    if (selected) {
+                        if (r === selected.row || c === selected.col) {
+                            cell.classList.add('highlighted');
+                        }
+                        const boxRow = Math.floor(selected.row / BOX_SIZE) * BOX_SIZE;
+                        const boxCol = Math.floor(selected.col / BOX_SIZE) * BOX_SIZE;
+                        if (r >= boxRow && r < boxRow + BOX_SIZE &&
+                            c >= boxCol && c < boxCol + BOX_SIZE) {
+                            cell.classList.add('highlighted');
+                        }
+                        if (selectedNum !== EMPTY && value === selectedNum && !(r === selected.row && c === selected.col)) {
+                            cell.classList.add('same-number');
+                        }
+                    }
+
+                    if (value !== EMPTY && !isFixed) {
+                        if (hasConflict(r, c, value)) {
+                            cell.classList.add('conflict');
+                        }
+                    }
+
+                    cell.addEventListener('click', () => selectCell(r, c));
+                    container.appendChild(cell);
+                }
+            }
+
+            document.getElementById('movesDisplay').textContent = game.moves;
+            document.getElementById('livesDisplay').textContent = '❤️'.repeat(game.lives) + '🖤'.repeat(3 - game.lives);
+            document.getElementById('hintCount').textContent = game.hints;
+            
+            // Обновляем панель цифр
+            updateNumberPanel();
+        }
+
+        // ============================================================
+        // 9. ЛОГИКА ИГРЫ
+        // ============================================================
+
+        function selectCell(row, col) {
+            if (game.gameOver) return;
+            game.selected = { row, col };
+            render();
+            document.getElementById('message').innerText = `✏️ Введите цифру для ячейки (${row+1}, ${col+1})`;
+        }
+
+        function inputNumber(num) {
+            if (game.gameOver) return;
+            if (!game.selected) {
+                document.getElementById('message').innerText = '⚠️ Сначала выберите ячейку';
+                return;
+            }
+
+            const { row, col } = game.selected;
+
+            if (game.fixed[row][col]) {
+                document.getElementById('message').innerText = '🔒 Нельзя изменять фиксированную ячейку';
+                return;
+            }
+
+            if (game.userBoard[row][col] === num) {
+                return;
+            }
+
+            // Проверяем, не превышен ли лимит цифры
+            const counts = getNumberCounts();
+            if (counts[num] >= 9) {
+                document.getElementById('message').innerText = `❌ Цифра ${num} уже использована 9 раз!`;
+                document.getElementById('message').style.color = '#ff4466';
+                return;
+            }
+
+            if (!isValidPlacement(row, col, num)) {
+                game.lives--;
+                document.getElementById('message').innerText = `❌ Неправильно! Осталось ${game.lives} жизней`;
+                document.getElementById('message').style.color = '#ff4466';
+
+                const container = document.getElementById('gridContainer');
+                const idx = row * SIZE + col;
+                const cell = container.children[idx];
+                if (cell) {
+                    cell.classList.add('error');
+                    setTimeout(() => cell.classList.remove('error'), 500);
+                }
+
+                if (game.lives <= 0) {
+                    game.gameOver = true;
+                    document.getElementById('message').innerText = '💀 Игра окончена! Попробуйте снова';
+                    document.getElementById('message').style.color = '#ff2244';
+                    if (game.timerInterval) {
+                        clearInterval(game.timerInterval);
+                    }
+                    render();
+                    showGameOver(false);
+                    return;
+                }
+
+                render();
+                return;
+            }
+
+            game.userBoard[row][col] = num;
+            game.moves++;
+            document.getElementById('message').innerText = `✅ Цифра ${num} поставлена!`;
+            document.getElementById('message').style.color = '#66ff88';
+
+            // Проверяем, все ли цифры расставлены
+            if (checkWin()) {
+                game.gameOver = true;
+                document.getElementById('message').innerText = '🎉 ПОБЕДА! Вы восстановили хронологию!';
+                document.getElementById('message').style.color = '#ffd700';
+                if (game.timerInterval) {
+                    clearInterval(game.timerInterval);
+                }
+                render();
+                
+                // Эффект исчезновения поля
+                const grid = document.getElementById('gridContainer');
+                grid.classList.add('victory');
+                
+                setTimeout(() => showVictory(), 800);
+                return;
+            }
+
+            render();
+        }
+
+        function isValidPlacement(row, col, num) {
+            for (let c = 0; c < SIZE; c++) {
+                if (c !== col && game.userBoard[row][c] === num) return false;
+            }
+            for (let r = 0; r < SIZE; r++) {
+                if (r !== row && game.userBoard[r][col] === num) return false;
+            }
+            const boxRow = Math.floor(row / BOX_SIZE) * BOX_SIZE;
+            const boxCol = Math.floor(col / BOX_SIZE) * BOX_SIZE;
+            for (let r = boxRow; r < boxRow + BOX_SIZE; r++) {
+                for (let c = boxCol; c < boxCol + BOX_SIZE; c++) {
+                    if ((r !== row || c !== col) && game.userBoard[r][c] === num) return false;
+                }
+            }
+            return true;
+        }
+
+        function hasConflict(row, col, num) {
+            for (let c = 0; c < SIZE; c++) {
+                if (c !== col && game.userBoard[row][c] === num) return true;
+            }
+            for (let r = 0; r < SIZE; r++) {
+                if (r !== row && game.userBoard[r][col] === num) return true;
+            }
+            const boxRow = Math.floor(row / BOX_SIZE) * BOX_SIZE;
+            const boxCol = Math.floor(col / BOX_SIZE) * BOX_SIZE;
+            for (let r = boxRow; r < boxRow + BOX_SIZE; r++) {
+                for (let c = boxCol; c < boxCol + BOX_SIZE; c++) {
+                    if ((r !== row || c !== col) && game.userBoard[r][c] === num) return true;
+                }
+            }
+            return false;
+        }
+
+        function checkWin() {
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (game.userBoard[r][c] === EMPTY) return false;
+                    if (game.userBoard[r][c] !== game.board[r][c]) return false;
+                }
+            }
+            return true;
+        }
+
+        function useHint() {
+            if (game.gameOver) return;
+            if (game.hints <= 0) {
+                document.getElementById('message').innerText = '❌ Подсказки закончились!';
+                return;
+            }
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (!game.fixed[r][c] && game.userBoard[r][c] !== game.board[r][c]) {
+                        game.userBoard[r][c] = game.board[r][c];
+                        game.hints--;
+                        document.getElementById('message').innerText = `💡 Подсказка: цифра ${game.board[r][c]}`;
+                        document.getElementById('message').style.color = '#66ff88';
+
+                        const container = document.getElementById('gridContainer');
+                        const idx = r * SIZE + c;
+                        const cell = container.children[idx];
+                        if (cell) {
+                            cell.classList.add('hint');
+                            setTimeout(() => cell.classList.remove('hint'), 500);
+                        }
+
+                        render();
+                        return;
+                    }
+                }
+            }
+
+            document.getElementById('message').innerText = '✅ Все ячейки уже правильные!';
+        }
+
+        function clearCell() {
+            if (game.gameOver) return;
+            if (!game.selected) {
+                document.getElementById('message').innerText = '⚠️ Сначала выберите ячейку';
+                return;
+            }
+
+            const { row, col } = game.selected;
+            if (game.fixed[row][col]) {
+                document.getElementById('message').innerText = '🔒 Нельзя очистить фиксированную ячейку';
+                return;
+            }
+
+            game.userBoard[row][col] = EMPTY;
+            document.getElementById('message').innerText = '🗑️ Ячейка очищена';
+            render();
+        }
+
+        function showVictory() {
+            const overlay = document.createElement('div');
+            overlay.className = 'victory-overlay';
+            overlay.innerHTML = `
+                <div class="victory-box">
+                    <h2>🎉 ПОБЕДА!</h2>
+                    <p>Вы восстановили хронологию времени!</p>
+                    <div class="stats">
+                        ⏱️ ${document.getElementById('timerDisplay').textContent}<br>
+                        🎯 ${game.moves} ходов
+                    </div>
+                    <button class="btn btn-primary" onclick="this.closest('.victory-overlay').remove(); initGame('${game.difficulty}')">
+                        ♻ Играть снова
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function showGameOver(won) {
+            const overlay = document.createElement('div');
+            overlay.className = 'victory-overlay';
+            overlay.innerHTML = `
+                <div class="victory-box">
+                    <h2 style="color: #ff4466;">💀 ПОРАЖЕНИЕ</h2>
+                    <p>Вы не справились с хронологией...</p>
+                    <div class="stats">
+                        ⏱️ ${document.getElementById('timerDisplay').textContent}<br>
+                        🎯 ${game.moves} ходов
+                    </div>
+                    <button class="btn btn-primary" onclick="this.closest('.victory-overlay').remove(); initGame('${game.difficulty}')">
+                        ♻ Попробовать снова
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        // ============================================================
+        // 10. ОБРАБОТЧИКИ СОБЫТИЙ
+        // ============================================================
+
+        document.querySelectorAll('.num-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!btn.classList.contains('used-up')) {
+                    inputNumber(parseInt(btn.dataset.num));
+                }
+            });
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        document.getElementById('hintBtn').addEventListener('click', useHint);
+        document.getElementById('clearBtn').addEventListener('click', clearCell);
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            const difficulty = document.getElementById('difficultySelect').value;
+            initGame(difficulty);
+        });
+
+        document.getElementById('difficultySelect').addEventListener('change', (e) => {
+            initGame(e.target.value);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '1' && e.key <= '9') {
+                const num = parseInt(e.key);
+                const btn = document.querySelector(`.num-btn[data-num="${num}"]`);
+                if (btn && !btn.classList.contains('used-up')) {
+                    inputNumber(num);
+                }
+            }
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                clearCell();
+            }
+            if (e.key === 'h' || e.key === 'H') {
+                useHint();
+            }
+        });
+
+        // ============================================================
+        // 11. ЗАПУСК
+        // ============================================================
+
+        initGame('medium');
+    </script>
+</body>
+</html>
